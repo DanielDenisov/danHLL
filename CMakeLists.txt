@@ -29,6 +29,7 @@ set(PROJECT_SOURCES
         ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
         utils/gameUtil.h
         utils/localUtil.h
+        draw/ESP.h
 )
 
 add_executable(danHLL ${PROJECT_SOURCES})

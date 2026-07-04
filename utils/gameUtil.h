@@ -43,18 +43,27 @@ struct Vector3 {
     }
 };
 
+//only use for world to screen.
+struct FVector    { float x, y, z; };
+struct FRotator   { float pitch, yaw, roll; };
+
 struct FMinimalViewInfo {
-    Vector3 Location;
-    Vector3 Rotation;
-    float FOV;
+    FVector  location;
+    FRotator rotation;
+    float    fov;
+    float    desiredFov;
+    float    orthoWidth;
+    float    orthoNearClip;
+    float    orthoFarClip;
+    float    aspectRatio;
 
     //more values not not really important
 
     void Print() const {
         printf("========== [ Camera View Info ] ==========\n");
-        printf("[+] Location : X: %7.2f | Y: %7.2f | Z: %7.2f\n", Location.x, Location.y, Location.z);
-        printf("[+] Rotation : P: %7.2f | Y: %7.2f | R: %7.2f\n", Rotation.x, Rotation.y, Rotation.z);
-        printf("[+] FOV      : %.2f\n", FOV);
+        printf("[+] Location : X: %7.2f | Y: %7.2f | Z: %7.2f\n", location.x, location.y, location.z);
+        printf("[+] Rotation : P: %7.2f | Y: %7.2f | R: %7.2f\n", location.x, location.y, location.z);
+        printf("[+] FOV      : %.2f\n", fov);
         printf("==========================================\n");
     }
 };

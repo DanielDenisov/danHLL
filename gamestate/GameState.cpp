@@ -1,5 +1,8 @@
 #include "GameState.h"
 
+#include <chrono>
+#include <thread>
+
 #include "memory/memory.h"
 
 GameState::GameState(uintptr_t gameBase) {
@@ -17,11 +20,12 @@ GSRet GameState::tick() {
     std::vector<PlayerEnt> ents = getEntities(uworld);
     if (ents.empty()) {
         std::cout << "[-] 0 Entities found"  << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         return {};
     }
 
     LPRet lpret = getLPInfo(uworld);
-    if (lpret.vm.FOV == 0) {
+    if (lpret.vm.fov == 0) {
         std::cout << "[-] Failed to find view matrix" << std::endl;
         return {};
     }
@@ -42,6 +46,15 @@ bool isValidCoords(Vector3 pos) {
         1 < std::abs(pos.y) && std::abs(pos.y) < 50000 &&
         1 < std::abs(pos.z) && std::abs(pos.z) < 50000) return true;
     return false;
+}
+
+void ScanForTeam(ptr pState, const char* label) {
+    printf("=== %s (pState=0x%llX) ===\n", label, pState);
+    for (int off = 0x480; off < 0x540; off += 1) {
+        uint8_t val = ReadMemory<uint8_t>(pState + off);
+        if (val == 1 || val == 2)
+            printf("  0x%X = %d\n", off, val);
+    }
 }
 
 std::vector<PlayerEnt> GameState::getEntities(uint64_t uworld) {
@@ -66,6 +79,9 @@ std::vector<PlayerEnt> GameState::getEntities(uint64_t uworld) {
         ptr pState = ReadMemory<ptr>(playerArray + a * sizeof(ptr));
         if (!pState) continue;
 
+        //scan, ask AI to find offset commen to all
+        // ScanForTeam(pState, std::to_string(a).c_str());
+
         PlayerEnt ent{};
         ent.pstate = pState;
 
@@ -81,6 +97,7 @@ std::vector<PlayerEnt> GameState::getEntities(uint64_t uworld) {
         //Get Pos
         ptr rootComp = ReadMemory<ptr>(pawn + off::ROOT_COMP);
         ent.pos = ReadMemory<Vector3>(rootComp + off::POS);
+        if (!isValidCoords(ent.pos)) continue; //skip bad coords
 
         //Get Weapon Type
         ptr currWeapon = ReadMemory<ptr>(pawn + off::CURR_WEAPON);

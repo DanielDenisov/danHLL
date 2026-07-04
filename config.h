@@ -6,11 +6,19 @@
 #include <vector>
 #include <cmath>
 
+namespace config {
+    inline int SCREEN_H = 1440;
+    inline int SCREEN_W = 2560;
+
+    inline double maxPlayerDist = 400; //meters
+
+    inline const auto OVERLAY_NAME = "Better Discord Overlay";
+}
 
 #define ptr uint64_t
 #define pr inline ptr
 
-inline constexpr bool isDebugMode = true;
+inline constexpr bool isDebugMode = false;
 
 #define DBG if(!isDebugMode) {} else
 struct asHex {
@@ -35,7 +43,7 @@ namespace off {
     //AGameStateBase->PlayerArray
     pr PLAYER_ARRAY = 0x238; //Of APlayerState, use PAWN to get pawn
 
-    pr TEAM_ID = 0x49C; //not documented
+    pr TEAM_ID = 0x4B4; //not documented
 
 
     //APlayerState->PrivatePawn
