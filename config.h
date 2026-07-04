@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <iostream>
 #include <vector>
+#include <cmath>
+
 
 #define ptr uint64_t
 #define pr inline ptr
@@ -24,7 +26,7 @@ namespace off {
     //ida dissasembler view.
     //48 8B 0D ? ? ? ? 48 85 C9 74 ? E8 ? ? ? ? 48 8B C8 (The conditional engine context load)
     //after scan, look at first function with qword_..., double click, and make sure its cross-references like 1k times
-    pr UWORLD = 0x46CCFA0;
+    pr UWORLD = 0x46ccfa0;
 
 
     //UWorld -> GameState
@@ -36,7 +38,7 @@ namespace off {
     pr TEAM_ID = 0x49C; //not documented
 
 
-
+    //APlayerState->PrivatePawn
     pr PAWN = 0x280;
     //AShooterCharacter->Health
     pr HEALTH = 0xa84; //float
@@ -59,9 +61,11 @@ namespace off {
     pr PlAYER_CONTROLLER = 0x30;
     //APlayerController->AcknowledgedPawn
     pr ACK_PAWN = 0x2A0;
+    //APawn->PlayerState
+    pr PLAYER_STATE = 0x240;
 
-    //APlayerController->PlayerCameraManagerClass
-    pr CAM_MANAGER = 0x2C0;
+    //APlayerController->PlayerCameraManager
+    pr CAM_MANAGER = 0x2b8;
     //APlayerCameraManager->CameraCachePrivate
     pr CAM_CACHE_PRIVATE = 0x1A60;
 

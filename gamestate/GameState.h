@@ -1,10 +1,12 @@
 #ifndef DANHLL_GAMESTATE_H
 #define DANHLL_GAMESTATE_H
 #include "config.h"
-#include "utils/gameUtil.h"
+#include "utils/localUtil.h"
 
 struct GSRet {
-
+    std::vector<PlayerEnt> ents{};
+    FMinimalViewInfo vm{};
+    uint8_t teamID{1};
 };
 
 class GameState {
@@ -20,6 +22,12 @@ private:
 
 
     std::vector<PlayerEnt> getEntities(ptr uworld);
+    struct LPRet {
+        uint8_t team{1};
+        FMinimalViewInfo vm{};
+    };
+    LPRet getLPInfo(ptr uworld);
+
 
 };
 
