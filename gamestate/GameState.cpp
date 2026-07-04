@@ -79,7 +79,7 @@ std::vector<PlayerEnt> GameState::getEntities(uint64_t uworld) {
         ptr pState = ReadMemory<ptr>(playerArray + a * sizeof(ptr));
         if (!pState) continue;
 
-        //scan, ask AI to find offset commen to all
+        //scan, ask AI to find offset common to all
         // ScanForTeam(pState, std::to_string(a).c_str());
 
         PlayerEnt ent{};

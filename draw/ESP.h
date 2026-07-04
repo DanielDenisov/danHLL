@@ -43,7 +43,11 @@ inline void ESP(FMinimalViewInfo vm, std::vector<PlayerEnt> ents, uint8_t localP
         }
 
         char dBuf[64];
-        sprintf(dBuf, "%s - %.0im", name, dist);
+        if (dist < config::maxPlayerWepDist) {
+            sprintf(dBuf, "%s - %.0im", name, dist);
+        } else {
+            sprintf(dBuf, "%.0im", dist);
+        }
         DrawTextCentered(head.x - w/2, head.y - 8, IM_COL32(255, 255, 255, 255), dBuf);
     }
 }

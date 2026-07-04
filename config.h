@@ -11,6 +11,7 @@ namespace config {
     inline int SCREEN_W = 2560;
 
     inline double maxPlayerDist = 400; //meters
+    inline double maxPlayerWepDist = 40;
 
     inline const auto OVERLAY_NAME = "Better Discord Overlay";
 }
