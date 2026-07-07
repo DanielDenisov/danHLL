@@ -33,7 +33,7 @@ int main() {
         sprintf(buf, "Entities: %lu", gsr.ents.size());
         DrawTextImGui(10, 10, IM_COL32(255, 0, 0, 255), buf);
 
-        ESP(gsr.vm, gsr.ents, gsr.teamID);
+        ESP(gsr.vm, gsr.ents, gsr.teamID, gsr.spawns);
 
         RenderEnd();
     }

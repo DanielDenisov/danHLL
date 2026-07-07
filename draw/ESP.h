@@ -10,36 +10,31 @@ inline Vector2 WorldToScreen(FMinimalViewInfo view, FVector world, int screenW, 
 struct WeaponName {char str[32];};
 WeaponName GetReadableWeaponName(uint8_t type);
 
-inline void ESP(FMinimalViewInfo vm, std::vector<PlayerEnt> ents, uint8_t localPlayerTeam) {
-    ptr uworld = ReadMemory<ptr>(0x140000000 + off::UWORLD);
-    ptr plvl = ReadMemory<ptr>(uworld + off::PRESISTENT_LEVEL);
-    ptr actorArray = ReadMemory<ptr>(plvl + 0x98);
-    int count = ReadMemory<ptr>(plvl + 0x98 + sizeof(ptr));
-    for (int i{}; i < count; i++) {
-        ptr actor = ReadMemory<ptr>(actorArray + (i * sizeof(ptr)));
-        if (!actor) continue; // Fixed bug: Check if 'actor' is valid, not 'actorArray'
+inline void ESP(FMinimalViewInfo vm, std::vector<PlayerEnt> ents, uint8_t localPlayerTeam, std::vector<SpawnPoint> spawns) {
+    Vector3 selfPos = {vm.location.x, vm.location.y, vm.location.z};
 
-        // Read the VTable address (the very first 8 bytes of the object instance)
-        ptr vtableAddr = ReadMemory<ptr>(actor);
+    for (SpawnPoint sp : spawns) {
+        auto color = IM_COL32(100, 100, 100, 100);
+        int dist = sp.pos.Dist(selfPos)/100;
 
-        if (vtableAddr == off::VTABLE_OUTPOST || vtableAddr == off::VTABLE_GARRISON) {
-            // Get Position
-            ptr rootComp = ReadMemory<ptr>(actor + off::ROOT_COMP);
-            if (!rootComp) continue;
-            Vector3 pos = ReadMemory<Vector3>(rootComp + off::POS);
-
-            Vector2 pos2d = WorldToScreen(vm, {pos.x, pos.y, pos.z}, config::SCREEN_W, config::SCREEN_H);
-
-            // Format the VTable address into your buffer as a Hex string
-            char dBuf[64];
-            snprintf(dBuf, sizeof(dBuf), "VTable: 0x%llX", (unsigned long long)vtableAddr);
-
-            DrawTextCentered(pos2d.x, pos2d.y, IM_COL32(255, 255, 255, 150), dBuf);
+        if (sp.garrison) {
+            color = IM_COL32(200, 30, 30, 120);
+        } else { //outpost
+            color = IM_COL32(35, 50, 200, 120);
         }
+
+        Vector2 scrPos = WorldToScreen(vm, {sp.pos.x, sp.pos.y, sp.pos.z}, config::SCREEN_W, config::SCREEN_H);
+
+        int rad{5};
+        DrawCircleFilled(scrPos.x, scrPos.y, rad, color);
+
+        char text[32] = "";
+        sprintf(text, "%.0im", dist);
+        DrawTextCentered(scrPos.x, scrPos.y /*+ rad + 5*/, IM_COL32(255, 255, 255, 200), text);
     }
 
 
-    Vector3 selfPos = {vm.location.x, vm.location.y, vm.location.z};
+
     for (PlayerEnt ent : ents) {
         if (ent.team == localPlayerTeam) continue; //skip same team
         if (ent.health < 1) continue; //skip dead

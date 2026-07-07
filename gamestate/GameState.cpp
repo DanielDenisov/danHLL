@@ -29,13 +29,12 @@ GSRet GameState::tick() {
         std::cout << "[-] Failed to find view matrix" << std::endl;
         return {};
     }
-
-
     DBG{lpret.vm.Print();}
+    // lpret.vm.rotation.roll /= 2;
 
-    lpret.vm.rotation.roll /= 2;
+    std::vector<SpawnPoint> spawns = getOutpostsGarrisonsPosition(uworld, lpret.team);
 
-    return {ents, lpret.vm, lpret.team};
+    return {ents, lpret.vm, lpret.team, spawns};
 }
 
 ptr GameState::getUworld() {
@@ -113,7 +112,31 @@ std::vector<PlayerEnt> GameState::getEntities(uint64_t uworld) {
     return eret;
 }
 
-//Print Test Log
+std::vector<SpawnPoint> GameState::getOutpostsGarrisonsPosition(uint64_t uworld, uint8_t localPlayerTeam) {
+    std::vector<SpawnPoint> spawns{};
+
+    ptr plvl = ReadMemory<ptr>(uworld + off::PRESISTENT_LEVEL);
+    ptr actorArray = ReadMemory<ptr>(plvl + off::PL_ACTOR_ARRAY);
+    int count = ReadMemory<ptr>(plvl + off::PL_ACTOR_ARRAY + sizeof(ptr));
+
+    for (int i{}; i < count; i++) {
+        ptr actor = ReadMemory<ptr>(actorArray + (i * sizeof(ptr)));
+        if (!actor) continue;
+
+        if (ReadMemory<uint8_t>(actor + off::OWNING_TEAM) == localPlayerTeam) continue; //skips object (before vtable test) if its on same team
+
+        ptr rootComp = ReadMemory<ptr>(actor + off::ROOT_COMP);
+        if (!rootComp) continue;
+        Vector3 pos = ReadMemory<Vector3>(rootComp + off::POS);
+
+        ptr vtableAddr = ReadMemory<ptr>(actor);
+
+        if (vtableAddr == off::VTABLE_OUTPOST) spawns.push_back({pos, false, true});
+        if (vtableAddr == off::VTABLE_GARRISON) spawns.push_back({pos, true, false});
+    }
+
+    return spawns;
+}
 
 GameState::LPRet GameState::getLPInfo(uint64_t uworld) {
     LPRet lpret;

@@ -7,6 +7,7 @@ struct GSRet {
     std::vector<PlayerEnt> ents{};
     FMinimalViewInfo vm{};
     uint8_t teamID{1};
+    std::vector<SpawnPoint> spawns{};
 };
 
 class GameState {
@@ -27,6 +28,9 @@ private:
         FMinimalViewInfo vm{};
     };
     LPRet getLPInfo(ptr uworld);
+
+
+    std::vector<SpawnPoint> getOutpostsGarrisonsPosition(ptr uworld, uint8_t localPlayerTeam);
 
 
 };

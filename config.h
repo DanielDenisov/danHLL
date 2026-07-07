@@ -44,6 +44,8 @@ namespace off {
     pr PRESISTENT_LEVEL = 0x30;
     //Either 0x98 to 0xA0
     pr PL_ACTOR_ARRAY = 0x98;
+    //ADynamicSpawn->m_OwningTeam
+    pr OWNING_TEAM = 0x2a8; //type ETeam, witch is actually a uint8
 
 
     //UWorld -> GameState

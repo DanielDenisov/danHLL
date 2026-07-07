@@ -13,6 +13,12 @@ struct PlayerEnt {
 
 };
 
+struct SpawnPoint {
+    Vector3 pos;
+    bool garrison{};
+    bool outpost{};
+};
+
 
 
 
