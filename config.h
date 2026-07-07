@@ -7,11 +7,13 @@
 #include <cmath>
 
 namespace config {
-    inline int SCREEN_H = 1440;
-    inline int SCREEN_W = 2560;
+    const inline int SCREEN_H = 1405;
+    const inline int SCREEN_W = 2560;
 
-    inline double maxPlayerDist = 400; //meters
-    inline double maxPlayerWepDist = 40;
+    const inline double maxPlayerDist = 400; //meters
+    const inline double maxPlayerWepDist = 40;
+
+    const inline bool isOnlyLine = true;
 
     inline const auto OVERLAY_NAME = "Better Discord Overlay";
 }

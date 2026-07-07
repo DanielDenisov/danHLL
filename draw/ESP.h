@@ -33,14 +33,25 @@ inline void ESP(FMinimalViewInfo vm, std::vector<PlayerEnt> ents, uint8_t localP
 
         float h = feet.y - head.y;
         float w = h / 2.0f;
-        DrawBox(head.x - w/2, head.y, w, h, IM_COL32(207, 56, 56, 255));
+        if (config::isOnlyLine) {
+            int lineX = head.x + w/2;
+            int lineYHeight = (feet.y - head.y)*(ent.health/100); //calc remaining health
+            DrawLine(lineX, feet.y, lineX, head.y, IM_COL32(34, 189, 39, 70));
+            DrawLine(lineX-w, feet.y, lineX-w, head.y, IM_COL32(200, 200, 200, 70));
+            if (!(100 - ent.health < 1)) { //not at full health
+                DrawLine(lineX, head.y-lineYHeight, lineX, feet.y, IM_COL32(207, 56, 56, 70));
+            }
+        } else {
+            DrawBox(head.x - w/2, head.y, w, h, IM_COL32(207, 56, 56, 255));
 
-        int lineX = head.x + w/2 + 1 + 5-int(5*(dist/config::maxPlayerDist)); //scale gap between box and hp line
-        int lineYHeight = (feet.y - head.y)*(ent.health/100); //calc remaining health
-        DrawLine(lineX, feet.y, lineX, feet.y-lineYHeight, IM_COL32(34, 189, 39, 255));
-        if (!(100 - ent.health < 1)) { //not at full health
-            DrawLine(lineX, feet.y-lineYHeight, lineX, head.y, IM_COL32(207, 56, 56, 255));
+            int lineX = head.x - w/2 + 1 + 5-int(5*(dist/config::maxPlayerDist)); //scale gap between box and hp line
+            int lineYHeight = (feet.y - head.y)*(ent.health/100); //calc remaining health
+            DrawLine(lineX, feet.y, lineX, feet.y, IM_COL32(34, 189, 39, 255));
+            if (!(100 - ent.health < 1)) { //not at full health
+                DrawLine(lineX, head.y-lineYHeight, lineX, feet.y, IM_COL32(207, 56, 56, 255));
+            }
         }
+
 
         char dBuf[64];
         if (dist < config::maxPlayerWepDist) {
@@ -48,7 +59,7 @@ inline void ESP(FMinimalViewInfo vm, std::vector<PlayerEnt> ents, uint8_t localP
         } else {
             sprintf(dBuf, "%.0im", dist);
         }
-        DrawTextCentered(head.x - w/2, head.y - 8, IM_COL32(255, 255, 255, 255), dBuf);
+        DrawTextCentered(head.x - w/2, head.y + 10, IM_COL32(255, 255, 255, 150), dBuf);
     }
 }
 

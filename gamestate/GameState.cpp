@@ -32,6 +32,8 @@ GSRet GameState::tick() {
 
     DBG{lpret.vm.Print();}
 
+    lpret.vm.rotation.roll /= 2;
+
     return {ents, lpret.vm, lpret.team};
 }
 
@@ -49,7 +51,7 @@ bool isValidCoords(Vector3 pos) {
 }
 
 void ScanForTeam(ptr pState, const char* label) {
-    printf("=== %s (pState=0x%llX) ===\n", label, pState);
+    printf("=== %s (pState=0x%lX) ===\n", label, pState);
     for (int off = 0x480; off < 0x540; off += 1) {
         uint8_t val = ReadMemory<uint8_t>(pState + off);
         if (val == 1 || val == 2)

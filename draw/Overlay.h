@@ -50,14 +50,14 @@ bool InitOverlay() {
     glfwWindowHint(GLFW_FOCUSED, GLFW_FALSE);
 
     // Get Resolution
-    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-    if (!monitor) {
-        std::cerr << "[-] Failed to get primary monitor." << std::endl;
-        return false;
-    }
-    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-    config::SCREEN_W = mode->width;
-    config::SCREEN_H = mode->height;
+    // GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    // if (!monitor) {
+    //     std::cerr << "[-] Failed to get primary monitor." << std::endl;
+    //     return false;
+    // }
+    // const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    // config::SCREEN_W = mode->width;
+    // config::SCREEN_H = mode->height;
 
     // Create Window
     window = glfwCreateWindow(config::SCREEN_W, config::SCREEN_H, config::OVERLAY_NAME, nullptr, nullptr);
