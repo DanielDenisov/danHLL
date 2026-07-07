@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include "Overlay.h"
+#include "memory/memory.h"
 #include "utils/localUtil.h"
 
 inline Vector2 WorldToScreen(FMinimalViewInfo view, FVector world, int screenW, int screenH);
@@ -10,6 +11,34 @@ struct WeaponName {char str[32];};
 WeaponName GetReadableWeaponName(uint8_t type);
 
 inline void ESP(FMinimalViewInfo vm, std::vector<PlayerEnt> ents, uint8_t localPlayerTeam) {
+    ptr uworld = ReadMemory<ptr>(0x140000000 + off::UWORLD);
+    ptr plvl = ReadMemory<ptr>(uworld + off::PRESISTENT_LEVEL);
+    ptr actorArray = ReadMemory<ptr>(plvl + 0x98);
+    int count = ReadMemory<ptr>(plvl + 0x98 + sizeof(ptr));
+    for (int i{}; i < count; i++) {
+        ptr actor = ReadMemory<ptr>(actorArray + (i * sizeof(ptr)));
+        if (!actor) continue; // Fixed bug: Check if 'actor' is valid, not 'actorArray'
+
+        // Read the VTable address (the very first 8 bytes of the object instance)
+        ptr vtableAddr = ReadMemory<ptr>(actor);
+
+        if (vtableAddr == off::VTABLE_OUTPOST || vtableAddr == off::VTABLE_GARRISON) {
+            // Get Position
+            ptr rootComp = ReadMemory<ptr>(actor + off::ROOT_COMP);
+            if (!rootComp) continue;
+            Vector3 pos = ReadMemory<Vector3>(rootComp + off::POS);
+
+            Vector2 pos2d = WorldToScreen(vm, {pos.x, pos.y, pos.z}, config::SCREEN_W, config::SCREEN_H);
+
+            // Format the VTable address into your buffer as a Hex string
+            char dBuf[64];
+            snprintf(dBuf, sizeof(dBuf), "VTable: 0x%llX", (unsigned long long)vtableAddr);
+
+            DrawTextCentered(pos2d.x, pos2d.y, IM_COL32(255, 255, 255, 150), dBuf);
+        }
+    }
+
+
     Vector3 selfPos = {vm.location.x, vm.location.y, vm.location.z};
     for (PlayerEnt ent : ents) {
         if (ent.team == localPlayerTeam) continue; //skip same team

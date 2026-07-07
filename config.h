@@ -40,6 +40,12 @@ namespace off {
     pr UWORLD = 0x46ccfa0;
 
 
+    //Uworld->PersistentLevel
+    pr PRESISTENT_LEVEL = 0x30;
+    //Either 0x98 to 0xA0
+    pr PL_ACTOR_ARRAY = 0x98;
+
+
     //UWorld -> GameState
     pr GAME_STATE = 0x130;
 
@@ -81,18 +87,8 @@ namespace off {
     pr CAM_CACHE_PRIVATE = 0x1A60;
 
 
-    // pr PRESISTENT_LEVEL = 0x30; //ts is like always at 0x30;
-    //
-    // pr ACTOR_ARRAY = 0x98;
-    //
-    // //AActor->RootComponent
-    // pr ROOT_COMP = 0x130;
-    // //USceneComponent->RelativeLocation
-    // pr POS = 0x11c;
-    //
-    // //APawn->PlayerState
-    // pr PLAYER_STATE = 0x240;
-    // //
+    pr VTABLE_OUTPOST = 0x1432F9C20;
+    pr VTABLE_GARRISON = 0x1432F7D60;
 
 }
 
