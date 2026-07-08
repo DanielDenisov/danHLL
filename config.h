@@ -71,6 +71,10 @@ namespace off {
     pr ROOT_COMP = 0x130;
     //USceneComponent->RelativeLocation
     pr POS = 0x11c;
+    //USceneComponent->RelativeRotation
+    pr ROTATION = 0x128;
+    //USceneComponent->RelativeScale3D
+    pr SCALE = 0x134;
 
     //UWorld->OwningGameInstance
     pr OWNING_GAME_INST = 0x188;

@@ -100,6 +100,9 @@ std::vector<PlayerEnt> GameState::getEntities(uint64_t uworld) {
         ptr rootComp = ReadMemory<ptr>(pawn + off::ROOT_COMP);
         ent.pos = ReadMemory<Vector3>(rootComp + off::POS);
         if (!isValidCoords(ent.pos)) continue; //skip bad coords
+        ent.evi.location = ent.pos;
+        ent.evi.rotation = ReadMemory<FRotator>(rootComp + off::ROTATION);
+        ent.evi.scale = ReadMemory<Vector3>(rootComp + off::SCALE);
 
         //Get Weapon Type
         ptr currWeapon = ReadMemory<ptr>(pawn + off::CURR_WEAPON);

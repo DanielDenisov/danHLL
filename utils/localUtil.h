@@ -4,13 +4,19 @@
 #include "config.h"
 #include "gameUtil.h"
 
+struct EnemyViewInfo {
+    Vector3 location{};
+    FRotator rotation{};
+    Vector3 scale{};
+};
+
 struct PlayerEnt {
     ptr pstate{};
     uint8_t team{};
     float health{};
     Vector3 pos{};
     uint8_t weaponID{};
-
+    EnemyViewInfo evi{};
 };
 
 struct SpawnPoint {
