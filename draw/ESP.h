@@ -13,6 +13,29 @@ WeaponName GetReadableWeaponName(uint8_t type);
 inline void ESP(FMinimalViewInfo vm, std::vector<PlayerEnt> ents, uint8_t localPlayerTeam, std::vector<SpawnPoint> spawns) {
     Vector3 selfPos = {vm.location.x, vm.location.y, vm.location.z};
 
+    constexpr float D2R = 3.14159265f / 180.f;
+    const float pcy = cosf(vm.rotation.yaw * D2R);
+    const float psy = sinf(vm.rotation.yaw * D2R);
+
+    // ── Radar (transparent, centred, camera-relative) ─────────────────────────
+    constexpr float RADAR_R     = 280.f;
+    constexpr float RADAR_WORLD = 20000.f; // 200 m in UU
+    const float RADAR_CX = config::SCREEN_W  * 0.5f;
+    const float RADAR_CY = config::SCREEN_H * 0.5f;
+    auto* dl = ImGui::GetBackgroundDrawList();
+    // 200 m boundary ring + 100 m mid-ring
+    dl->AddCircle(ImVec2(RADAR_CX, RADAR_CY), RADAR_R,        IM_COL32(255,255,255,35), 64, 1.f);
+    dl->AddCircle(ImVec2(RADAR_CX, RADAR_CY), RADAR_R * 0.5f, IM_COL32(255,255,255,20), 64, 1.f);
+    // Crosshair — forward is always "up" because enemy blips are rotated by cam yaw
+    dl->AddLine(ImVec2(RADAR_CX, RADAR_CY - RADAR_R), ImVec2(RADAR_CX, RADAR_CY + RADAR_R), IM_COL32(255,255,255,22), 1.f);
+    dl->AddLine(ImVec2(RADAR_CX - RADAR_R, RADAR_CY), ImVec2(RADAR_CX + RADAR_R, RADAR_CY), IM_COL32(255,255,255,22), 1.f);
+    // Self dot
+    dl->AddCircleFilled(ImVec2(RADAR_CX, RADAR_CY), 3.f, IM_COL32(80, 200, 80, 220));
+
+    struct ThreatInfo { float angle; int dist; };
+    ThreatInfo threats[32];
+    int threatCount = 0;
+
     for (SpawnPoint sp : spawns) {
         auto color = IM_COL32(100, 100, 100, 100);
         int dist = sp.pos.Dist(selfPos)/100;
@@ -36,21 +59,72 @@ inline void ESP(FMinimalViewInfo vm, std::vector<PlayerEnt> ents, uint8_t localP
 
 
     for (PlayerEnt ent : ents) {
-        if (ent.team == localPlayerTeam) continue; //skip same team
-        if (ent.health < 1) continue; //skip dead
-        //bad pos already filtered out
+        if (ent.team == localPlayerTeam) continue;
+        if (ent.health < 1) continue;
 
         int dist = ent.pos.Dist(selfPos)/100;
+        if (dist > config::maxPlayerDist) continue;
 
-        if (dist > config::maxPlayerDist) continue;//out of range
+        // ── Aim detection (no WorldToScreen — works for all 360°) ────────────
+        float lsp, lcp, lsy, lcy;
+        {
+            float pd = (float)(int8_t)ent.evi.pitch * (360.f / 256.f);
+            lsp = sinf(pd * D2R); lcp = cosf(pd * D2R);
+            lsy = sinf(ent.evi.rotation.yaw * D2R); lcy = cosf(ent.evi.rotation.yaw * D2R);
+        }
+        FVector entFwd = { lcp*lcy, lcp*lsy, lsp };
+        FVector entEye = { ent.evi.location.x, ent.evi.location.y, ent.evi.location.z };
+        // evi.location is root/feet; selfPos is camera/head — height delta alone
+        // inflates 3D perpDist to ~1500 UU even for a direct shot, so check XY only.
+        float dX     = selfPos.x - ent.pos.x;
+        float dY     = selfPos.y - ent.pos.y;
+        float along  = lcy * dX + lsy * dY;         // dot in XY: >0 means facing toward us
+        float perp2d = fabsf(lcy * dY - lsy * dX);  // 2D cross: horizontal miss distance
+        bool aimAtMe = along > 0.f && perp2d < 200.f; // 200 UU = 2 m horizontal miss radius
 
+        // ── Threat ring (sub-200 m, any direction) ───────────────────────────
+        if (aimAtMe && dist < 200 && threatCount < 32) {
+            float dx       =  ent.pos.x - selfPos.x;
+            float dy       =  ent.pos.y - selfPos.y;
+            float rightDot = -dx * psy + dy * pcy;
+            float fwdDot   =  dx * pcy + dy * psy;
+            threats[threatCount++] = { atan2f(rightDot, fwdDot), dist };
+        }
 
+        // ── Radar blip + fire line (any direction) ───────────────────────────
+        {
+            float dx  = ent.pos.x - selfPos.x;
+            float dy  = ent.pos.y - selfPos.y;
+            float rdx = (-dx * psy + dy * pcy) * (RADAR_R / RADAR_WORLD);
+            float rdy = -(dx * pcy + dy * psy) * (RADAR_R / RADAR_WORLD);
+
+            float d     = sqrtf(rdx*rdx + rdy*rdy);
+            bool atEdge = d > RADAR_R - 3.f;
+            if (atEdge) { float s = (RADAR_R - 3.f) / d; rdx *= s; rdy *= s; }
+            float px = RADAR_CX + rdx, py = RADAR_CY + rdy;
+
+            ImU32 dotCol = aimAtMe ? IM_COL32(255, 60, 60, 240) : IM_COL32(220, 80, 80, 180);
+            dl->AddCircleFilled(ImVec2(px, py), 3.f, dotCol);
+
+            if (aimAtMe)
+                dl->AddLine(ImVec2(RADAR_CX, RADAR_CY), ImVec2(px, py),
+                            IM_COL32(255, 60, 60, 180), 1.5f);
+
+            if (!atEdge) {
+                float eFwdRdx =  (-lcp*lcy * psy + lcp*lsy * pcy);
+                float eFwdRdy = -(lcp*lcy * pcy + lcp*lsy * psy);
+                ImU32 fireCol = aimAtMe ? IM_COL32(255, 60, 60, 220) : IM_COL32(255, 180, 0, 130);
+                dl->AddLine(ImVec2(px, py),
+                            ImVec2(px + eFwdRdx * 12.f, py + eFwdRdy * 12.f),
+                            fireCol, 1.5f);
+            }
+        }
+
+        // ── Screen-space overlay (only when enemy is in front) ───────────────
         Vector2 feet = WorldToScreen(vm, {ent.pos.x, ent.pos.y, ent.pos.z+90.f}, config::SCREEN_W, config::SCREEN_H);
         Vector2 head = WorldToScreen(vm, {ent.pos.x, ent.pos.y, ent.pos.z-90.f}, config::SCREEN_W, config::SCREEN_H);
+        if (feet.x == -1 || feet.y == -1 || head.x == -1 || head.y == -1) continue;
 
-        if (feet.x == -1 || feet.y == -1 || head.x == -1 || head.y == -1) continue; //off-screen
-
-        //get the name of a healed weapon.
         char name[32];
         WeaponName result = GetReadableWeaponName(ent.weaponID);
         memcpy(name, result.str, 32);
@@ -59,31 +133,67 @@ inline void ESP(FMinimalViewInfo vm, std::vector<PlayerEnt> ents, uint8_t localP
         float w = h / 2.0f;
         if (config::isOnlyLine) {
             int lineX = head.x + w/2;
-            int lineYHeight = (feet.y - head.y)*(ent.health/100); //calc remaining health
+            int lineYHeight = (feet.y - head.y)*(ent.health/100);
             DrawLine(lineX, feet.y, lineX, head.y, IM_COL32(34, 189, 39, 70));
-            DrawLine(lineX-w, feet.y, lineX-w, head.y, IM_COL32(200, 200, 200, 70));
-            if (!(100 - ent.health < 1)) { //not at full health
+            DrawLine(lineX-w, feet.y, lineX-w, head.y, aimAtMe ? IM_COL32(207, 56, 56, 70) : IM_COL32(200, 200, 200, 70));
+            if (!(100 - ent.health < 1))
                 DrawLine(lineX, head.y-lineYHeight, lineX, feet.y, IM_COL32(207, 56, 56, 70));
-            }
         } else {
             DrawBox(head.x - w/2, head.y, w, h, IM_COL32(207, 56, 56, 255));
-
-            int lineX = head.x - w/2 + 1 + 5-int(5*(dist/config::maxPlayerDist)); //scale gap between box and hp line
-            int lineYHeight = (feet.y - head.y)*(ent.health/100); //calc remaining health
+            int lineX = head.x - w/2 + 1 + 5-int(5*(dist/config::maxPlayerDist));
+            int lineYHeight = (feet.y - head.y)*(ent.health/100);
             DrawLine(lineX, feet.y, lineX, feet.y, IM_COL32(34, 189, 39, 255));
-            if (!(100 - ent.health < 1)) { //not at full health
+            if (!(100 - ent.health < 1))
                 DrawLine(lineX, head.y-lineYHeight, lineX, feet.y, IM_COL32(207, 56, 56, 255));
-            }
         }
-
 
         char dBuf[64];
-        if (dist < config::maxPlayerWepDist) {
+        if (dist < config::maxPlayerWepDist)
             sprintf(dBuf, "%s - %.0im", name, dist);
-        } else {
+        else
             sprintf(dBuf, "%.0im", dist);
-        }
         DrawTextCentered(head.x - w/2, head.y + 10, IM_COL32(255, 255, 255, 150), dBuf);
+
+        // Laser line (screen-space only)
+        {
+            constexpr float LASER_LEN = 600.f;
+            FVector laserTip = { entEye.x + entFwd.x * LASER_LEN,
+                                 entEye.y + entFwd.y * LASER_LEN,
+                                 entEye.z + entFwd.z * LASER_LEN };
+            Vector2 scrEye = WorldToScreen(vm, entEye,   config::SCREEN_W, config::SCREEN_H);
+            Vector2 scrTip = WorldToScreen(vm, laserTip, config::SCREEN_W, config::SCREEN_H);
+            if (scrEye.x != -1 && scrTip.x != -1) {
+                ImU32 laserCol = aimAtMe ? IM_COL32(255, 40, 40, 90) : IM_COL32(255, 200, 0, 90);
+                DrawLine(scrEye.x, scrEye.y, scrTip.x, scrTip.y, laserCol);
+            }
+        }
+    }
+
+    // ── Aimed-at threat ring (sub-200 m) ─────────────────────────────────────
+    if (threatCount > 0) {
+        const float CX    = config::SCREEN_W * 0.5f;
+        const float CY    = config::SCREEN_H * 0.5f;
+        const float IND_R = RADAR_R + 28.f;  // just outside the 200 m radar ring
+        const float AR    = 10.f;   // indicator radius
+
+        for (int i = 0; i < threatCount; i++) {
+            float ang = threats[i].angle; // 0=ahead, +π/2=right
+            float ax  = CX + sinf(ang) * IND_R;
+            float ay  = CY - cosf(ang) * IND_R;
+
+            dl->AddCircleFilled(ImVec2(ax, ay), AR, IM_COL32(200, 30, 30, 190));
+            dl->AddCircle(ImVec2(ax, ay), AR, IM_COL32(255, 100, 100, 220), 16, 1.5f);
+            // Arrow pointing toward direction threat is coming from
+            dl->AddLine(ImVec2(ax - sinf(ang) * (AR - 2.f), ay + cosf(ang) * (AR - 2.f)),
+                        ImVec2(ax + sinf(ang) * (AR - 2.f), ay - cosf(ang) * (AR - 2.f)),
+                        IM_COL32(255, 255, 255, 240), 2.f);
+
+            char distStr[12];
+            sprintf(distStr, "%dm", threats[i].dist);
+            ImVec2 tsz = ImGui::CalcTextSize(distStr);
+            dl->AddText(ImVec2(ax - tsz.x * 0.5f, ay + AR + 3.f),
+                        IM_COL32(255, 80, 80, 220), distStr);
+        }
     }
 }
 

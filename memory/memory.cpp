@@ -150,6 +150,7 @@ template uintptr_t ReadMemory<uintptr_t>(pid_t pid, long address);
 template Vector3 ReadMemory<Vector3>(pid_t pid, long address);
 template uint8_t ReadMemory<uint8_t>(pid_t pid, long address);
 template FCameraCacheEntry ReadMemory<FCameraCacheEntry>(pid_t pid, long address);
+template FRotator ReadMemory<FRotator>(pid_t pid, long address);
 
 template bool WriteMemory<int>(pid_t pid, long address, const int& value);
 template bool WriteMemory<long>(pid_t pid, long address, const long& value);
@@ -165,6 +166,7 @@ template uintptr_t ReadMemory<uintptr_t>(uintptr_t address);
 template Vector3 ReadMemory<Vector3>(uintptr_t address);
 template uint8_t ReadMemory<uint8_t>(uintptr_t address);
 template FCameraCacheEntry ReadMemory<FCameraCacheEntry>(uintptr_t address);
+template FRotator ReadMemory<FRotator>(uintptr_t address);
 
 //For reading player list or bone list and stuff
 // template TArray<uintptr_t> ReadMemory<TArray<uintptr_t>>(uintptr_t address);

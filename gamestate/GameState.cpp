@@ -103,6 +103,8 @@ std::vector<PlayerEnt> GameState::getEntities(uint64_t uworld) {
         ent.evi.location = ent.pos;
         ent.evi.rotation = ReadMemory<FRotator>(rootComp + off::ROTATION);
         ent.evi.scale = ReadMemory<Vector3>(rootComp + off::SCALE);
+        ent.evi.pitch = ReadMemory<uint8_t>(pawn + off::PITCH);
+        // std::cout << "pitch reading: " << static_cast<int>(ent.evi.pitch) << std::endl;
 
         //Get Weapon Type
         ptr currWeapon = ReadMemory<ptr>(pawn + off::CURR_WEAPON);

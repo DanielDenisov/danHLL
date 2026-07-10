@@ -8,6 +8,7 @@ struct EnemyViewInfo {
     Vector3 location{};
     FRotator rotation{};
     Vector3 scale{};
+    uint8_t pitch{};
 };
 
 struct PlayerEnt {

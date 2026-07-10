@@ -75,6 +75,8 @@ namespace off {
     pr ROTATION = 0x128;
     //USceneComponent->RelativeScale3D
     pr SCALE = 0x134;
+    //APawn->RemoteViewPitch
+    pr PITCH = 0x232;
 
     //UWorld->OwningGameInstance
     pr OWNING_GAME_INST = 0x188;
